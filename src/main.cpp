@@ -4140,7 +4140,15 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
                             // however we MUST always provide at least what the remote peer needs
                             typedef std::pair<unsigned int, uint256> PairType;
                             BOOST_FOREACH(PairType& pair, merkleBlock.vMatchedTxn)
-                                pfrom->PushMessage(NetMsgType::TX, block.vtx[pair.first]);
+                            {
+                                if (GetArg("-skipfiltertx", 0) && block.vtx[pair.first].GetHash().ToString() == GetArg("-skipfiltertx", "")) {
+                                    LogPrintf("Skipping TX: %s\n", block.vtx[pair.first].GetHash().ToString()); //MODIFY send transaction after filtered block
+                                } else {
+                                    //LogPrintf("Sending TX: %s\n", block.vtx[pair.first].GetHash().ToString()); //MODIFY send transaction after filtered block
+                                    pfrom->PushMessage(NetMsgType::TX, block.vtx[pair.first]);
+                                }
+
+                            }
                         }
                         // else
                             // no response
