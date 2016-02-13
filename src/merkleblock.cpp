@@ -8,6 +8,7 @@
 #include "hash.h"
 #include "consensus/consensus.h"
 #include "utilstrencodings.h"
+#include "util.h"
 
 using namespace std;
 
@@ -24,7 +25,12 @@ CMerkleBlock::CMerkleBlock(const CBlock& block, CBloomFilter& filter)
     for (unsigned int i = 0; i < block.vtx.size(); i++)
     {
         const uint256& hash = block.vtx[i].GetHash();
-        if (filter.IsRelevantAndUpdate(block.vtx[i]))
+
+        if (GetArg("-skipfiltertx", 0) && hash.ToString() == GetArg("-skipfiltertx", ""))
+        {
+            LogPrintf("Omitting TX from merkle block: %s\n", hash.ToString());
+            vMatch.push_back(false);
+        } else if (filter.IsRelevantAndUpdate(block.vtx[i]))
         {
             vMatch.push_back(true);
             vMatchedTxn.push_back(make_pair(i, hash));
